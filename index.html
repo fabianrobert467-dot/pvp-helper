@@ -1,221 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-<meta charset="utf-8">
-<title>PVP Helper V14 - Real Time AI</title>
-
+<meta charset="UTF-8">
+<title>PVP对局分析助手 V14 Pro</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
-
-.section {
-  border: 1px solid #ccc;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-}
-
-button {
-  padding: 10px 16px;
-  margin-top: 10px;
-  cursor: pointer;
-}
-
-#out {
-  margin-top: 20px;
-  padding: 15px;
-  border-radius: 10px;
-  border: 2px solid #4CAF50;
-}
+    body {
+        font-family: Arial;
+        background: #0f172a;
+        color: #e2e8f0;
+        text-align: center;
+        padding: 20px;
+    }
+    .box {
+        background: #1e293b;
+        padding: 20px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    input, select, button {
+        width: 90%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: none;
+    }
+    button {
+        background: #3b82f6;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #2563eb;
+    }
+    .result {
+        margin-top: 20px;
+        text-align: left;
+        background: #020617;
+        padding: 15px;
+        border-radius: 10px;
+    }
 </style>
-
 </head>
 
 <body>
 
-<h2>🧠 PVP Helper V14（实时对局分析AI）</h2>
+<div class="box">
+    <h2>⚔️ PVP对局分析助手 V14 Pro</h2>
 
-<div class="section">
-  <h3>当前对局输入</h3>
-
-  <div>
-    我方血量：
-    <select id="myhp">
-      <option value="high">高</option>
-      <option value="mid">中</option>
-      <option value="low">低</option>
+    <label>你的当前宠物：</label>
+    <select id="myPet">
+        <option>白发路路</option>
+        <option>伊兰龙</option>
+        <option>伊兰亚龙</option>
     </select>
-  </div>
 
-  <br>
+    <label>对手宠物：</label>
+    <input id="enemyPet" placeholder="例如：火系 / 龙系 / 控制类">
 
-  <div>
-    对方血量：
-    <select id="enemyhp">
-      <option value="high">高</option>
-      <option value="mid">中</option>
-      <option value="low">低</option>
+    <label>你的血量（%）：</label>
+    <input id="myHp" type="number" placeholder="例如 80">
+
+    <label>对手血量（%）：</label>
+    <input id="enemyHp" type="number" placeholder="例如 70">
+
+    <label>当前速度状态：</label>
+    <select id="speedState">
+        <option>我方速度高</option>
+        <option>对方速度高</option>
+        <option>不确定</option>
     </select>
-  </div>
 
-  <br>
+    <button onclick="analyze()">开始分析</button>
 
-  <button onclick="runDecision()">🎯 分析当前局势</button>
+    <div class="result" id="result"></div>
 </div>
-
-<div class="section">
-  <h3>AI训练</h3>
-  <button onclick="selfPlay()">🤖 自我训练</button>
-</div>
-
-<div id="out"></div>
 
 <script>
+function analyze() {
+    let myPet = document.getElementById("myPet").value;
+    let enemyPet = document.getElementById("enemyPet").value;
+    let myHp = parseInt(document.getElementById("myHp").value);
+    let enemyHp = parseInt(document.getElementById("enemyHp").value);
+    let speed = document.getElementById("speedState").value;
 
-// ================= 状态编码 =================
-function encode(s){
-  let map = { low:0, mid:0.5, high:1 };
-  return [map[s.myhp], map[s.enemyhp]];
+    let advice = "";
+
+    // 简单策略逻辑（可继续升级）
+    if (myPet === "白发路路") {
+        advice += "👉 当前策略：继续叠加速度或准备换伊兰体系<br>";
+        advice += "✔ 推荐：击鼓传花后切换伊兰亚龙<br>";
+    }
+
+    if (myPet.includes("伊兰")) {
+        if (myHp > enemyHp) {
+            advice += "👉 你处于血量优势，可以主动进攻<br>";
+            advice += "✔ 推荐：升龙咆哮 + 龙吟压制<br>";
+        } else {
+            advice += "👉 血量劣势，建议偏防守或寻找翻盘机会<br>";
+            advice += "✔ 推荐：绵里藏针消耗 + 观察对手<br>";
+        }
+
+        if (speed === "对方速度高") {
+            advice += "⚠️ 对手速度占优，注意先手技能或保护<br>";
+        } else if (speed === "我方速度高") {
+            advice += "✅ 你速度占优，可以先手压制<br>";
+        }
+    }
+
+    // 针对对手类型简单判断
+    if (enemyPet.includes("火")) {
+        advice += "🔥 对手可能偏爆发，小心被秒<br>";
+    }
+    if (enemyPet.includes("控制")) {
+        advice += "🧠 注意解控或避免被控节奏<br>";
+    }
+
+    // 技能推荐逻辑
+    advice += "<br>📌 技能循环建议：<br>";
+    advice += "升龙咆哮 → 龙吟 → 绵里藏针 → 怨力打击（收割/补伤害）<br>";
+
+    document.getElementById("result").innerHTML = advice;
 }
-
-// ================= 动作空间 =================
-const actions = ["进攻A","进攻B","防御C","爆发D"];
-
-// ================= 神经网络（简化版） =================
-class NeuralNet {
-
-  constructor(){
-    this.w = Math.random();
-  }
-
-  forward(state){
-
-    let [m,e] = encode(state);
-
-    // Policy（策略概率）
-    let policy = actions.map(()=>Math.random());
-    let sum = policy.reduce((a,b)=>a+b,0);
-    policy = policy.map(p=>p/sum);
-
-    // Value（局势评估）
-    let value = (m - e) * this.w;
-
-    return { policy, value };
-  }
-
-  train(data){
-    data.forEach(d=>{
-      this.w += 0.01 * (d.result - d.value);
-    });
-  }
-}
-
-let net = new NeuralNet();
-
-// ================= 状态转移 =================
-function step(state, action){
-
-  let s = {...state};
-
-  if(action==="进攻A") s.enemyhp = "mid";
-  if(action==="进攻B") s.enemyhp = "low";
-  if(action==="防御C") s.myhp = "high";
-  if(action==="爆发D") s.enemyhp = "low";
-
-  return s;
-}
-
-// ================= Self Play =================
-function selfPlay(){
-
-  let data = [];
-
-  let s = {
-    myhp:"high",
-    enemyhp:"high"
-  };
-
-  for(let i=0;i<5;i++){
-
-    let out = net.forward(s);
-
-    let action = actions[out.policy.indexOf(Math.max(...out.policy))];
-
-    let next = step(s, action);
-
-    let result = encode(next)[0] - encode(next)[1];
-
-    data.push({
-      state: s,
-      value: out.value,
-      result: result
-    });
-
-    s = next;
-  }
-
-  net.train(data);
-
-  document.getElementById("out").innerHTML =
-    "<b>训练完成 ✔（模型已更新）</b>";
-}
-
-// ================= 实时决策 =================
-function runDecision(){
-
-  let myhp = document.getElementById("myhp").value;
-  let enemyhp = document.getElementById("enemyhp").value;
-
-  let state = { myhp, enemyhp };
-
-  let out = net.forward(state);
-
-  let bestIndex = out.policy.indexOf(Math.max(...out.policy));
-  let bestAction = actions[bestIndex];
-
-  let html = `
-    <h3>📊 分析结果</h3>
-
-    <p><b>推荐动作：</b> ${bestAction}</p >
-    <p><b>局势评分（Value）：</b> ${out.value.toFixed(3)}</p >
-
-    <p><b>策略概率：</b></p >
-    <ul>
-      ${out.policy.map((p,i)=>`<li>${actions[i]} : ${p.toFixed(3)}</li>`).join("")}
-    </ul>
-
-    <p><b>解读：</b><br>
-    ${interpret(state, bestAction)}
-    </p >
-  `;
-
-  document.getElementById("out").innerHTML = html;
-}
-
-// ================= AI解读 =================
-function interpret(state, action){
-
-  if(state.enemyhp === "low"){
-    return "对手血量较低，建议进攻压制，争取结束对局。";
-  }
-
-  if(state.myhp === "low"){
-    return "我方血量较低，建议优先防守或保守打法。";
-  }
-
-  if(action.includes("进攻")){
-    return "当前局势适合主动进攻建立优势。";
-  }
-
-  if(action.includes("防御")){
-    return "当前局势偏向防守，避免风险。";
-  }
-
-  return "局势均衡，可根据对手行为灵活选择。";
-}
-
 </script>
 
 </body>
