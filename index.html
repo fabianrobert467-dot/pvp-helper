@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>PVP神器</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+button { margin: 5px; padding: 10px; }
+.result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<h2>🐉 伊兰龙PVP神器</h2>
+
+<h3>你的状态</h3>
+<button onclick="setMyHp('high')">高血</button>
+<button onclick="setMyHp('mid')">中血</button>
+<button onclick="setMyHp('low')">低血</button>
+
+<h3>对手血量</h3>
+<button onclick="setEnemyHp('high')">高</button>
+<button onclick="setEnemyHp('mid')">中</button>
+<button onclick="setEnemyHp('low')">低</button>
+
+<h3>对手类型</h3>
+<button onclick="setEnemyType('atk')">爆发</button>
+<button onclick="setEnemyType('tank')">肉盾</button>
+<button onclick="setEnemyType('control')">控制</button>
+
+<br><br>
+<button onclick="calc()">🔥 出手建议</button>
+
+<div class="result" id="result"></div>
+
+<script>
+let myhp = "high";
+let enemyhp = "high";
+let enemyType = "atk";
+
+function setMyHp(v){ myhp=v }
+function setEnemyHp(v){ enemyhp=v }
+function setEnemyType(v){ enemyType=v }
+
+function calc() {
+    let action = "";
+    let tip = "";
+
+    // ===== 核心AI =====
+
+    if (enemyhp === "low") {
+        action = "绵里藏针";
+        tip = "直接收割";
+    }
+    else if (myhp === "low") {
+        action = "绵里藏针";
+        tip = "避免被反杀";
+    }
+    else if (enemyhp === "high") {
+        action = "龙吟";
+        tip = "压血线+试探";
+    }
+    else if (enemyhp === "mid") {
+        action = "升龙咆哮";
+        tip = "打爆发窗口";
+    }
+
+    // ===== 高级判断 =====
+    if (enemyType === "control") {
+        tip += "（注意别被控，别贪）";
+    }
+    if (enemyType === "atk" && myhp === "mid") {
+        tip += "（小心被秒）";
+    }
+
+    document.getElementById("result").innerHTML =
+        "👉 " + action + "<br>📌 " + tip;
+}
+</script>
+
+</body>
+</html>
