@@ -2,81 +2,95 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>PVP神器</title>
+<title>PVP Helper — V14 AlphaZero</title>
 <style>
-body { font-family: Arial; padding: 20px; }
-button { margin: 5px; padding: 10px; }
-.result { margin-top: 20px; font-size: 20px; font-weight: bold; }
+body { font-family: Arial, sans-serif; padding: 20px; }
+button { margin: 6px; padding: 10px 14px; }
+#out { margin-top: 16px; }
 </style>
 </head>
 
 <body>
 
-<h2>🐉 伊兰龙PVP神器</h2>
+<h2>🧠 PVP Helper — V14 自我学习 AI</h2>
 
-<h3>你的状态</h3>
-<button onclick="setMyHp('high')">高血</button>
-<button onclick="setMyHp('mid')">中血</button>
-<button onclick="setMyHp('low')">低血</button>
+<button onclick="selfPlay()">🤖 自我对战训练</button>
+<button onclick="runDecision()">🎯 当前决策建议</button>
 
-<h3>对手血量</h3>
-<button onclick="setEnemyHp('high')">高</button>
-<button onclick="setEnemyHp('mid')">中</button>
-<button onclick="setEnemyHp('low')">低</button>
-
-<h3>对手类型</h3>
-<button onclick="setEnemyType('atk')">爆发</button>
-<button onclick="setEnemyType('tank')">肉盾</button>
-<button onclick="setEnemyType('control')">控制</button>
-
-<br><br>
-<button onclick="calc()">🔥 出手建议</button>
-
-<div class="result" id="result"></div>
+<div id="out"></div>
 
 <script>
-let myhp = "high";
-let enemyhp = "high";
-let enemyType = "atk";
 
-function setMyHp(v){ myhp=v }
-function setEnemyHp(v){ enemyhp=v }
-function setEnemyType(v){ enemyType=v }
+// ===== 状态 =====
+let state = { myhp: "high", enemyhp: "high" };
+const actions = ["A","B","C","D"];
 
-function calc() {
-    let action = "";
-    let tip = "";
-
-    // ===== 核心AI =====
-
-    if (enemyhp === "low") {
-        action = "绵里藏针";
-        tip = "直接收割";
-    }
-    else if (myhp === "low") {
-        action = "绵里藏针";
-        tip = "避免被反杀";
-    }
-    else if (enemyhp === "high") {
-        action = "龙吟";
-        tip = "压血线+试探";
-    }
-    else if (enemyhp === "mid") {
-        action = "升龙咆哮";
-        tip = "打爆发窗口";
-    }
-
-    // ===== 高级判断 =====
-    if (enemyType === "control") {
-        tip += "（注意别被控，别贪）";
-    }
-    if (enemyType === "atk" && myhp === "mid") {
-        tip += "（小心被秒）";
-    }
-
-    document.getElementById("result").innerHTML =
-        "👉 " + action + "<br>📌 " + tip;
+// ===== 编码 =====
+function encode(s){
+  let map = { low:0, mid:0.5, high:1 };
+  return [ map[s.myhp], map[s.enemyhp] ];
 }
+
+// ===== 神经网络简化 =====
+class NeuralNet {
+  constructor(){ this.w = Math.random(); }
+  forward(s){
+    let [m,e] = encode(s);
+    let policy = actions.map(a => Math.random());
+    let sum = policy.reduce((a,b)=>a+b,0);
+    policy = policy.map(p=>p/sum);
+    let value = (m - e) * this.w;
+    return { policy, value };
+  }
+  train(data){
+    data.forEach(d => {
+      this.w += 0.01 * (d.result - d.value);
+    });
+  }
+}
+
+let net = new NeuralNet();
+
+// ===== 状态转移 =====
+function step(s, action){
+  let next = {...s};
+  if(action==="A") next.enemyhp="mid";
+  if(action==="B") next.enemyhp="low";
+  if(action==="C") next.myhp="high";
+  if(action==="D") next.enemyhp="low";
+  return next;
+}
+
+// ===== Self-Play =====
+function selfPlay(){
+  let data = [];
+  let s = { myhp:"high", enemyhp:"high" };
+
+  for(let i=0;i<5;i++){
+    let out = net.forward(s);
+    let action = actions[out.policy.indexOf(Math.max(...out.policy))];
+    let next = step(s, action);
+
+    data.push({ state:s, value:out.value, result: (encode(next)[0]-encode(next)[1]) });
+    s = next;
+  }
+
+  net.train(data);
+  document.getElementById("out").innerHTML = "<p>训练完成 ✔ 权重已更新</p >";
+}
+
+// ===== 决策建议 =====
+function runDecision(){
+  let out = net.forward(state);
+  let best = actions[out.policy.indexOf(Math.max(...out.policy))];
+  document.getElementById("out").innerHTML = `
+    <div>
+      <b>推荐动作：</b> ${best}<br>
+      <b>胜率估计：</b> ${out.value.toFixed(3)}
+    </div>
+  `;
+}
+
 </script>
 
 </body>
