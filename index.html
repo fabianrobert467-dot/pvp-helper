@@ -1,21 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <title>PvP Helper</title>
-  <link rel="stylesheet" href="style.css">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>洛克王国世界 PVP 辅助终端</title>
+    <style>
+        body { font-family: sans-serif; background: #eef2f5; padding: 20px; }
+        .card { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
+        .res { margin-top: 20px; padding: 15px; border-top: 1px solid #eee; line-height: 1.6; }
+        .win { color: #2ecc71; font-weight: bold; }
+        .lose { color: #e74c3c; font-weight: bold; }
+    </style>
 </head>
 <body>
-  <h1>PvP Helper</h1>
+    <div class="card">
+        <h2>🏆 PVP 智能决策建议</h2>
+        <label>我方精灵：</label>
+        <select id="myPet" onchange="update()"></select>
+        <label>敌方精灵：</label>
+        <select id="enemyPet" onchange="update()"></select>
+        <div id="result" class="res">正在加载 300+ 宠物数据...</div>
+    </div>
 
-  <select id="petA"></select>
-  <select id="petB"></select>
-  <button onclick="simulate()">对战</button>
+    <script src="config.js"></script>
+    <script>
+        let db = [];
+        async function init() {
+            const r = await fetch('pet_data.json');
+            db = await r.json();
+            const s1 = document.getElementById('myPet');
+            const s2 = document.getElementById('enemyPet');
+            db.forEach(p => {
+                s1.add(new Option(p.name, p.name));
+                s2.add(new Option(p.name, p.name));
+            });
+            document.getElementById('result').innerText = "数据已就绪，请选择精灵。";
+        }
 
-  <div id="result"></div>
+        function update() {
+            const p1 = db.find(p => p.name === document.getElementById('myPet').value);
+            const p2 = db.find(p => p.name === document.getElementById('enemyPet').value);
+            if(!p1 || !p2) return;
 
-  <script src="app.js"></script>
+            const m = ROCO_CONFIG.getMultiplier(p1.element, p2.element);
+            const prio1 = Math.max(...p1.skills.map(s => parseInt(s.priority)||0));
+            const prio2 = Math.max(...p2.skills.map(s => parseInt(s.priority)||0));
+
+            let h = `<b>分析报告：</b><br>`;
+            h += `属性倍率：<span class="${m>=1?'win':'lose'}">${m}x</span><br>`;
+            h += (prio1 > prio2) ? `<span class="win">✅ 先手优势 (+${prio1})</span>` : `<span class="lose">⚠️ 敌方先手 (+${prio2})</span>`;
+            
+            const best = p1.skills.sort((a,b) => b.priority - a.priority)[0];
+            h += `<br><b>建议出招：</b>${best.name}`;
+            
+            document.getElementById('result').innerHTML = h;
+        }
+        init();
+    </script>
 </body>
 </html>
-<!-- test -->
