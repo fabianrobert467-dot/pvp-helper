@@ -3,62 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>洛克 PVP 终极辅助终端</title>
+    <title>洛克 PVP 诊断版</title>
     <style>
-        :root { --primary: #3498db; --success: #2ecc71; --warning: #f1c40f; --danger: #e74c3c; }
         body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; margin: 0; }
         .card { background: white; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; font-size: 18px; margin-bottom: 20px; }
+        h2 { text-align: center; color: #2c3e50; font-size: 16px; margin-bottom: 20px; line-height: 1.5; }
         .input-group { margin-bottom: 15px; }
         label { font-weight: bold; color: #7f8c8d; font-size: 13px; display: block; margin-bottom: 5px; }
         input { width: 100%; padding: 12px; border: 2px solid #edf2f7; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
-        
-        /* 结果面板 - 默认隐藏 */
-        #resultPanel { display: none; margin-top: 20px; padding: 15px; border-radius: 12px; background: #fff; border: 2px solid #3498db; animation: slideUp 0.3s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        .win-box { text-align: center; margin-bottom: 15px; }
-        .win-rate { font-size: 36px; font-weight: 900; color: #2c3e50; }
-        .bar-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin: 10px 0; }
-        .bar-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.6s ease; }
-
-        .tag-red { background: #fff5f5; color: #c53030; padding: 8px; border-radius: 6px; margin-bottom: 5px; font-size: 14px; border-left: 4px solid #fc8181; }
-        .tag-green { background: #f0fff4; color: #276749; padding: 8px; border-radius: 6px; margin-bottom: 5px; font-size: 14px; border-left: 4px solid #68d391; }
+        #resultPanel { display: none; margin-top: 20px; padding: 15px; border-radius: 12px; background: #fff; border: 2px solid #3498db; }
+        .debug-info { font-size: 12px; color: #e67e22; background: #fff3e0; padding: 10px; border-radius: 8px; margin-bottom: 15px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 id="mainStatus">⚙️ 正在加载数据库...</h2>
+    <h2 id="mainStatus">📡 正在尝试连接数据库...</h2>
     
+    <div id="debugBox" class="debug-info">诊断状态: 等待初始化...</div>
+
     <datalist id="petList"></datalist>
 
     <div class="input-group">
-        <label>🛡️ 我方精灵</label>
-        <input type="text" id="myPet" list="petList" placeholder="输入并从列表选择" autocomplete="off">
+        <label>🛡️ 我方精灵 (输入一个字试试)</label>
+        <input type="text" id="myPet" list="petList" placeholder="点击或输入名字" autocomplete="off">
     </div>
 
     <div class="input-group">
         <label>🎯 敌方精灵</label>
-        <input type="text" id="enemyPet" list="petList" placeholder="输入并从列表选择" autocomplete="off">
+        <input type="text" id="enemyPet" list="petList" placeholder="点击或输入名字" autocomplete="off">
     </div>
 
     <div id="resultPanel">
-        <div class="win-box">
-            <div id="winRateText" class="win-rate">--%</div>
-            <div style="font-size:12px; color:#7f8c8d;">PVP 模拟胜率</div>
-            <div class="bar-bg"><div id="winRateBar" class="bar-fill"></div></div>
-        </div>
-        
-        <div style="background:#f8fafc; padding:10px; border-radius:8px; font-size:14px; margin-bottom:15px;">
-            <p id="moveOrderText" style="margin:0; color:#34495e;"></p >
-        </div>
-
-        <label>⚠️ 敌方威胁提示</label>
+        <h3 id="winRateText" style="text-align:center; font-size:30px; margin:10px 0;">--%</h3>
+        <p id="moveOrderText" style="font-size:14px; color:#34495e; background:#f8fafc; padding:10px; border-radius:8px;"></p >
         <div id="enemyTags"></div>
-        
-        <label style="margin-top:15px;">✅ 我方操作建议</label>
-        <div id="myAdvice"></div>
+        <div id="myAdvice" style="margin-top:10px;"></div>
     </div>
 </div>
 
@@ -67,74 +47,71 @@
 
 <script>
     let db = [];
+    const statusH2 = document.getElementById('mainStatus');
+    const debugBox = document.getElementById('debugBox');
+    const dl = document.getElementById('petList');
 
-    // 1. 加载数据
-    window.onload = async function() {
+    async function init() {
         try {
-            const res = await fetch('pet_data.json?v=' + Date.now());
-            db = await res.json();
-            const dl = document.getElementById('petList');
+            // 强制刷新缓存
+            const response = await fetch('pet_data.json?t=' + new Date().getTime());
+            if (!response.ok) throw new Error("无法获取 pet_data.json (错误码: " + response.status + ")");
+            
+            db = await response.json();
+            
+            if (!Array.isArray(db) || db.length === 0) {
+                debugBox.innerText = "🚨 警告: 数据库文件是空的，或者格式不是 [{}, {}]";
+                return;
+            }
+
+            // 检查第一个数据项的结构
+            const firstPet = db[0];
+            const nameKey = firstPet.name ? 'name' : (firstPet.精灵名 ? '精灵名' : null);
+            
+            if (!nameKey) {
+                debugBox.innerText = "🚨 错误: 数据里找不到 'name' 字段。实际字段名是: " + Object.keys(firstPet).join(', ');
+                return;
+            }
+
+            // 填充列表
+            dl.innerHTML = "";
             db.forEach(p => {
-                let opt = document.createElement('option');
-                opt.value = p.name.trim(); // 自动修剪数据库里的空格
+                const opt = document.createElement('option');
+                opt.value = p[nameKey].trim();
                 dl.appendChild(opt);
             });
-            document.getElementById('mainStatus').innerText = "🏆 战术中心已就绪 (" + db.length + ")";
-        } catch (e) {
-            document.getElementById('mainStatus').innerText = "❌ 加载失败，请检查文件";
-        }
-    };
 
-    // 2. 核心逻辑：监听两个输入框
-    function checkAndRun() {
-        const myName = document.getElementById('myPet').value.trim();
-        const enName = document.getElementById('enemyPet').value.trim();
-        
-        // 查找宠物（不区分空格）
-        const myPet = db.find(p => p.name.trim() === myName);
-        const enPet = db.find(p => p.name.trim() === enName);
+            statusH2.innerText = "🏆 成功载入 " + db.length + " 只精灵";
+            debugBox.style.display = "none"; // 成功后隐藏诊断栏
 
-        const panel = document.getElementById('resultPanel');
-        const status = document.getElementById('mainStatus');
-
-        if (myPet && enPet) {
-            // 【关键步骤】先显示面板，防止后续逻辑报错导致面板不出来
-            panel.style.display = 'block';
-            status.innerText = "📊 正在实时模拟对决...";
-
-            try {
-                // 执行引擎计算
-                const wr = RocoEngine.simulateWinRate(myPet, enPet);
-                document.getElementById('winRateText').innerText = wr + '%';
-                document.getElementById('winRateBar').style.width = wr + '%';
-                
-                const strat = RocoEngine.getStrategy(myPet, enPet);
-                document.getElementById('moveOrderText').innerText = strat.moveOrder;
-
-                const enMech = RocoEngine.analyzeMechanics(enPet);
-                const myMech = RocoEngine.analyzeMechanics(myPet);
-
-                document.getElementById('enemyTags').innerHTML = enMech.threats.length ? 
-                    enMech.threats.map(t => `<div class="tag-red">🚨 ${t}</div>`).join('') : '<div class="tag-green">常规威胁</div>';
-                
-                document.getElementById('myAdvice').innerHTML = myMech.advice.length ? 
-                    myMech.advice.map(a => `<div class="tag-green">✅ ${a}</div>`).join('') : '<div class="tag-green">正常对战</div>';
-
-            } catch (err) {
-                console.error("引擎计算出错:", err);
-                status.innerText = "⚠️ 计算出错: " + err.message;
-            }
-        } else {
-            // 如果没找全，保持隐藏
-            panel.style.display = 'none';
-            if(myName && enName) {
-                status.innerText = "🔍 库中未找到所选宠物";
-            }
+        } catch (err) {
+            statusH2.innerText = "❌ 加载失败";
+            debugBox.innerText = "错误详情: " + err.message;
         }
     }
 
-    document.getElementById('myPet').addEventListener('input', checkAndRun);
-    document.getElementById('enemyPet').addEventListener('input', checkAndRun);
+    function run() {
+        const myName = document.getElementById('myPet').value.trim();
+        const enName = document.getElementById('enemyPet').value.trim();
+        const myPet = db.find(p => p.name === myName);
+        const enPet = db.find(p => p.name === enName);
+
+        if (myPet && enPet) {
+            document.getElementById('resultPanel').style.display = 'block';
+            const wr = RocoEngine.simulateWinRate(myPet, enPet);
+            document.getElementById('winRateText').innerText = wr + '%';
+            document.getElementById('moveOrderText').innerText = RocoEngine.getStrategy(myPet, enPet).moveOrder;
+            
+            const enMech = RocoEngine.analyzeMechanics(enPet);
+            document.getElementById('enemyTags').innerHTML = enMech.threats.map(t => `<div style="color:red; font-size:12px;">⚠️ ${t}</div>`).join('');
+        }
+    }
+
+    document.getElementById('myPet').addEventListener('input', run);
+    document.getElementById('enemyPet').addEventListener('input', run);
+    
+    // 启动
+    init();
 </script>
 </body>
 </html>
