@@ -1,83 +1,76 @@
-// 洛克王国 PVP 核心分析引擎
+/**
+ * 洛克 PVP 核心模拟计算引擎 V3.1
+ */
 const RocoEngine = {
-    // 1. 扫描技能描述，解析隐藏机制 (删PP、硬控、防控、换下传递)
+    // 机制扫描器
     analyzeMechanics: function(pet) {
-        let tags = new Set();
-        if (!pet.skills) return [];
+        let advice = [];
+        let threats = [];
+        const skills = pet.skills || [];
 
-        pet.skills.forEach(skill => {
-            const d = skill.desc || "";
-            if (d.includes("换下") || d.includes("接力") || d.includes("下一只")) {
-                tags.add("🔄 状态传递 (注意防范接力推队)");
+        skills.forEach(s => {
+            const d = s.desc || "";
+            // 扫描关键词
+            if (d.includes("提升") || d.includes("攻击+")) advice.push(`${s.name}: 强化增益`);
+            if (d.includes("恢复") || d.includes("治疗")) advice.push(`${s.name}: 核心续航`);
+            if (d.includes("必先") || parseInt(s.priority) >= 4) {
+                advice.push(`${s.name}: 顶级先手`);
+                threats.push(`${s.name}: 极速威胁`);
             }
-            if (d.includes("删除") && d.includes("PP")) {
-                tags.add("🔥 删PP机制 (注意技能续航)");
-            }
-            if (d.includes("恐惧") || d.includes("冰冻") || d.includes("催眠") || d.includes("迷惑")) {
-                tags.add("😵 强力硬控 (建议首发开出防控)");
-            }
-            if (d.includes("免疫") || d.includes("异常")) {
-                tags.add("🛡️ 自带防控 (拥有免控能力)");
-            }
-            if (d.includes("必先") || parseInt(skill.priority) >= 4) {
-                tags.add("⚡ 极高先手 (技能先手度 +4 及以上)");
-            }
+            if (d.includes("删除") && d.includes("PP")) threats.push(`${s.name}: 删PP机制`);
+            if (d.includes("恐惧") || d.includes("冰冻") || d.includes("催眠")) threats.push(`${s.name}: 强力控制`);
+            if (d.includes("换下") || d.includes("接力")) threats.push(`${s.name}: 状态传递`);
         });
-        return Array.from(tags);
+
+        // 去重
+        return { 
+            advice: [...new Set(advice)], 
+            threats: [...new Set(threats)] 
+        };
     },
 
-    // 2. 模拟对局优势 (速度线博弈 & 胜率计算)
-    calculateAdvantage: function(myPet, enemyPet) {
-        // 速度判定
-        const mySpeed = myPet.stats.speed;
-        const enSpeed = enemyPet.stats.speed;
-        const myMaxPrio = Math.max(...myPet.skills.map(s => parseInt(s.priority) || 0));
-        const enMaxPrio = Math.max(...enemyPet.skills.map(s => parseInt(s.priority) || 0));
+    // 战术策略生成器
+    getStrategy: function(myPet, enPet) {
+        const ms = myPet.stats.speed;
+        const es = enPet.stats.speed;
+        let moveOrder = "";
 
-        let speedMsg = "";
-        let speedAdv = 0; // 速度分
-
-        if (myMaxPrio > enMaxPrio) {
-            speedMsg = `<span style="color:#2ecc71;">✅ 我方绝对先手 (技能+${myMaxPrio} 压制 +${enMaxPrio})</span>`;
-            speedAdv = 15;
-        } else if (myMaxPrio < enMaxPrio) {
-            speedMsg = `<span style="color:#e74c3c;">⚠️ 敌方绝对先手 (技能+${enMaxPrio} 压制 +${myMaxPrio})</span>`;
-            speedAdv = -15;
+        if (ms > es) {
+            moveOrder = `⚡ 我方速度线占优 (${ms} vs ${es})。首发建议：开启防控或进行首轮强攻。`;
+        } else if (ms < es) {
+            moveOrder = `🐢 对方拥有先手优势 (${es} vs ${ms})。首发建议：使用必先技能或反伤技能。`;
         } else {
-            if (mySpeed > enSpeed) {
-                speedMsg = `<span style="color:#2ecc71;">✅ 我方速度面板占优 (${mySpeed} vs ${enSpeed})</span>`;
-                speedAdv = 10;
-            } else if (mySpeed < enSpeed) {
-                speedMsg = `<span style="color:#e74c3c;">⚠️ 敌方速度面板占优 (${enSpeed} vs ${mySpeed})</span>`;
-                speedAdv = -10;
-            } else {
-                speedMsg = `⚖️ 速度完全同等，拼随机乱数`;
-            }
+            moveOrder = `⚖️ 速度完全对等，首发博弈取决于技能先手度。`;
         }
 
-        // 简易胜率计算 (攻防乘区 + 属性克制乘区 + 速度加权)
-        let myAtk = Math.max(myPet.stats.atk, myPet.stats.sp_atk);
-        let enDef = Math.max(enemyPet.stats.def, enemyPet.stats.sp_def);
-        
-        // 容错：如果找不到 config 中的克制倍率，默认为 1
-        let multiplier = 1;
+        let shouldSwitch = "暂无威胁";
         if (typeof ROCO_CONFIG !== 'undefined') {
-            const type1 = myPet.element.replace('系', '');
-            const type2 = enemyPet.element.replace('系', '');
-            multiplier = ROCO_CONFIG.getMultiplier(type1, type2);
+            const mult = ROCO_CONFIG.getMultiplier(myPet.element.replace('系',''), enPet.element.replace('系',''));
+            if (mult < 1) shouldSwitch = "属性被动，建议切换";
+            if (mult > 1) shouldSwitch = "优势对抗，无需换宠";
         }
-        
-        let score = (myAtk / enDef) * multiplier;
-        let winRate = 50;
-        
-        if (score > 1.5) winRate = 75;
-        else if (score > 1.1) winRate = 60;
-        else if (score < 0.8) winRate = 40;
-        else if (score < 0.5) winRate = 25;
 
-        winRate += speedAdv;
-        winRate = Math.max(5, Math.min(95, winRate)); // 锁定在 5% 到 95% 之间
+        return { moveOrder, shouldSwitch };
+    },
 
-        return { speedMsg, winRate, multiplier };
+    // 胜率模拟算法
+    simulateWinRate: function(myPet, enPet) {
+        let base = 50;
+        
+        // 1. 属性修正 ($multiplier$)
+        if (typeof ROCO_CONFIG !== 'undefined') {
+            const m = ROCO_CONFIG.getMultiplier(myPet.element.replace('系',''), enPet.element.replace('系',''));
+            base += (m - 1) * 35; 
+        }
+
+        // 2. 种族值面板修正
+        const myPower = Math.max(myPet.stats.atk, myPet.stats.sp_atk);
+        const enBulk = (enPet.stats.def + enPet.stats.sp_def) / 2;
+        base += (myPower - enBulk) * 0.15;
+
+        // 3. 速度压制修正
+        base += (myPet.stats.speed - enPet.stats.speed) * 0.08;
+
+        return Math.min(99, Math.max(1, Math.round(base)));
     }
 };
