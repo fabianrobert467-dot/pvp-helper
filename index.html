@@ -3,132 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>洛克 PVP 终极辅助终端</title>
+    <title>洛克战术实战辅助</title>
     <style>
-        :root { --primary: #3498db; --success: #2ecc71; --warning: #f1c40f; --danger: #e74c3c; }
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; margin: 0; color: #2d3436; }
-        .card { background: white; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        h2 { text-align: center; font-size: 18px; color: #2c3e50; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; }
-        label { font-weight: bold; color: #636e72; font-size: 13px; display: block; margin-bottom: 8px; }
-        input { width: 100%; padding: 14px; border: 2px solid #e9ecef; border-radius: 12px; font-size: 16px; box-sizing: border-box; transition: 0.3s; }
-        input:focus { border-color: var(--primary); outline: none; background: #fff; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
+        .card { background: white; max-width: 450px; margin: 0 auto; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { text-align: center; font-weight: bold; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 15px; }
+        .row { display: flex; gap: 10px; margin-bottom: 10px; }
+        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
         
-        /* 结果面板 */
-        #resultPanel { display: none; margin-top: 20px; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .hp-box { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .hp-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
+        input[type="range"] { width: 100%; cursor: pointer; }
 
-        .win-box { text-align: center; padding: 20px; background: #f8fafc; border-radius: 15px; margin-bottom: 15px; }
-        .win-rate { font-size: 42px; font-weight: 800; color: #2d3436; margin-bottom: 5px; }
-        .bar-bg { background: #dfe6e9; height: 10px; border-radius: 5px; overflow: hidden; margin: 15px 0; }
-        .bar-fill { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-
-        .section-title { font-size: 14px; font-weight: bold; margin: 15px 0 8px; display: flex; align-items: center; }
-        .tag { padding: 10px; border-radius: 10px; margin-bottom: 8px; font-size: 14px; line-height: 1.4; border-left: 5px solid; }
-        .tag-red { background: #fff5f5; color: #c53030; border-color: #fc8181; }
-        .tag-green { background: #f0fff4; color: #276749; border-color: #68d391; }
-        .info-text { background: #edf2f7; color: #4a5568; padding: 12px; border-radius: 10px; font-size: 14px; }
+        #panel { display: none; margin-top: 15px; text-align: center; }
+        .win-rate { font-size: 48px; font-weight: 900; color: #2d3436; margin: 10px 0; }
+        .mult-info { font-size: 13px; color: #636e72; margin-bottom: 15px; }
+        
+        .box { text-align: left; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 8px; border-left: 4px solid; }
+        .box-red { background: #fff5f5; color: #c53030; border-color: #feb2b2; }
+        .box-green { background: #f0fff4; color: #276749; border-color: #9ae6b4; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 id="mainStatus">⚙️ 系统初始化中...</h2>
+    <div class="header" id="status">同步中...</div>
     
-    <datalist id="petList"></datalist>
+    <div class="row">
+        <input type="text" id="myN" list="pl" placeholder="我方精灵" onfocus="this.value=''">
+        <input type="text" id="enN" list="pl" placeholder="敌方精灵" onfocus="this.value=''">
+    </div>
+    <datalist id="pl"></datalist>
 
-    <div class="input-group">
-        <label>🛡️ 我方首发精灵</label>
-        <input type="text" id="myPet" list="petList" placeholder="输入关键字搜索..." autocomplete="off">
+    <div class="hp-box">
+        <div class="hp-label"><span>我方 HP: <span id="myHpVal">100</span>%</span></div>
+        <input type="range" id="myHp" min="0" max="100" value="100">
+    </div>
+    <div class="hp-box">
+        <div class="hp-label"><span>敌方 HP: <span id="enHpVal">100</span>%</span></div>
+        <input type="range" id="enHp" min="0" max="100" value="100">
     </div>
 
-    <div class="input-group">
-        <label>🎯 敌方目标精灵</label>
-        <input type="text" id="enemyPet" list="petList" placeholder="输入关键字搜索..." autocomplete="off">
-    </div>
-
-    <div id="resultPanel">
-        <div class="win-box">
-            <div id="winRateText" class="win-rate">50%</div>
-            <div style="font-size:12px; color:#b2bec3;">实时对局胜率模拟</div>
-            <div class="bar-bg"><div id="winRateBar" class="bar-fill"></div></div>
-            <div id="moveOrderText" class="info-text">正在评估速度线...</div>
-        </div>
-        
-        <div class="section-title">⚠️ 敌方核心威胁</div>
-        <div id="enemyTags"></div>
-        
-        <div class="section-title">✅ 我方战术建议</div>
-        <div id="myAdvice"></div>
+    <div id="panel">
+        <div class="win-rate" id="wrText">50%</div>
+        <div class="mult-info" id="multText"></div>
+        <div id="threats"></div>
+        <div id="advice"></div>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script src="engine.js"></script>
-
 <script>
     let db = [];
-
-    // 1. 加载并清洗数据
-    window.onload = async function() {
+    async function init() {
         try {
-            const res = await fetch('pet_data.json?v=' + Date.now());
-            db = await res.json();
-            const dl = document.getElementById('petList');
-            db.forEach(p => {
-                if(p.name) {
-                    let opt = document.createElement('option');
-                    opt.value = p.name;
-                    dl.appendChild(opt);
-                }
-            });
-            document.getElementById('mainStatus').innerText = "🏆 战术中心已就绪 (" + db.length + ")";
-        } catch (e) {
-            document.getElementById('mainStatus').innerText = "❌ 数据加载失败";
-        }
-    };
+            const r = await fetch('pet_data.json?v=' + Date.now());
+            db = await r.json();
+            const l = document.getElementById('pl');
+            db.forEach(p => { let o = document.createElement('option'); o.value = p.name; l.appendChild(o); });
+            document.getElementById('status').innerText = "🏆 实战分析系统 (已就绪)";
+        } catch(e) { document.getElementById('status').innerText = "❌ 数据加载失败"; }
+    }
 
-    // 2. 执行实时分析
-    function checkAndRun() {
-        const myName = document.getElementById('myPet').value.trim();
-        const enName = document.getElementById('enemyPet').value.trim();
+    function update() {
+        const my = db.find(p => p.name === document.getElementById('myN').value);
+        const en = db.find(p => p.name === document.getElementById('enN').value);
+        const myH = parseInt(document.getElementById('myHp').value);
+        const enH = parseInt(document.getElementById('enHp').value);
         
-        const myPet = db.find(p => p.name === myName);
-        const enPet = db.find(p => p.name === enName);
+        document.getElementById('myHpVal').innerText = myH;
+        document.getElementById('enHpVal').innerText = enH;
 
-        const panel = document.getElementById('resultPanel');
-
-        if (myPet && enPet) {
-            panel.style.display = 'block';
+        if (my && en) {
+            document.getElementById('panel').style.display = 'block';
+            const res = RocoEngine.calculateLive(my, en, myH, enH);
             
-            // A. 计算胜率
-            const wr = RocoEngine.simulateWinRate(myPet, enPet);
-            document.getElementById('winRateText').innerText = wr + '%';
-            setTimeout(() => {
-                document.getElementById('winRateBar').style.width = wr + '%';
-            }, 100);
-
-            // B. 获取速度与先手建议
-            const strat = RocoEngine.getStrategy(myPet, enPet);
-            document.getElementById('moveOrderText').innerText = strat.moveOrder;
-
-            // C. 提取威胁与建议
-            const myMech = RocoEngine.analyzeMechanics(myPet);
-            const enMech = RocoEngine.analyzeMechanics(enPet);
-
-            document.getElementById('enemyTags').innerHTML = enMech.threats
-                .map(t => `<div class="tag tag-red">🚨 ${t}</div>`).join('');
+            document.getElementById('wrText').innerText = res.pct + "%";
+            document.getElementById('multText').innerHTML = 
+                `我方输出: x${res.myAtkMult} | 敌方输出: x${res.enAtkMult}`;
             
-            document.getElementById('myAdvice').innerHTML = myMech.advice
-                .map(a => `<div class="tag tag-green">💡 ${a}</div>`).join('');
-
-        } else {
-            panel.style.display = 'none';
+            document.getElementById('threats').innerHTML = res.threats.map(t => `<div class="box box-red">${t}</div>`).join('');
+            document.getElementById('advice').innerHTML = res.advice.map(a => `<div class="box box-green">${a}</div>`).join('');
         }
     }
 
-    document.getElementById('myPet').addEventListener('input', checkAndRun);
-    document.getElementById('enemyPet').addEventListener('input', checkAndRun);
+    ['myN','enN','myHp','enHp'].forEach(id => document.getElementById(id).addEventListener('input', update));
+    init();
 </script>
 </body>
 </html>
