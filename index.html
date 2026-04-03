@@ -2,78 +2,100 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>洛克 PVP 终极辅助终端</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; margin: 0; }
-        .card { background: white; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #2c3e50; font-size: 22px; margin-top: 0; }
-        .input-group { margin-bottom: 15px; }
-        label { font-weight: bold; color: #34495e; font-size: 14px; display: block; margin-bottom: 5px; }
-        input[type="text"] { width: 100%; padding: 12px; border: 2px solid #e0e6ed; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        :root { --primary: #3498db; --success: #2ecc71; --warning: #f1c40f; --danger: #e74c3c; }
+        body { font-family: -apple-system, "Helvetica Neue", sans-serif; background: #f4f7f9; padding: 15px; margin: 0; color: #333; }
+        .card { background: white; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; font-size: 20px; }
         
-        .panel { display: none; margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .bar-bg { background: #e2e8f0; height: 20px; border-radius: 10px; overflow: hidden; margin: 10px 0; }
-        .bar-fill { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 50%; transition: width 0.5s ease; }
-        .tags-container div { background: #fee2e2; color: #b91c1c; padding: 6px 10px; margin-bottom: 8px; border-radius: 6px; font-size: 13px; font-weight: bold; }
+        .input-group { margin-bottom: 20px; position: relative; }
+        label { font-weight: 600; color: #7f8c8d; font-size: 13px; display: block; margin-bottom: 8px; text-transform: uppercase; }
+        input { width: 100%; padding: 14px; border: 2px solid #edf2f7; border-radius: 10px; font-size: 16px; box-sizing: border-box; transition: all 0.3s; background: #f8fafc; }
+        input:focus { border-color: var(--primary); outline: none; background: #fff; box-shadow: 0 0 0 4px rgba(52,152,219,0.1); }
+
+        .panel { display: none; margin-top: 25px; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        .win-box { text-align: center; margin-bottom: 20px; }
+        .win-rate { font-size: 32px; font-weight: 800; color: #2c3e50; }
+        .bar-bg { background: #edf2f7; height: 12px; border-radius: 6px; overflow: hidden; margin: 12px 0; }
+        .bar-fill { background: var(--primary); height: 100%; width: 50%; transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+
+        .strat-card { background: #f8fafc; padding: 15px; border-left: 4px solid var(--primary); border-radius: 4px; margin-bottom: 20px; }
+        .tag-red { background: #fff5f5; color: #c53030; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; border-left: 4px solid #fc8181; font-weight: 500; }
+        .tag-green { background: #f0fff4; color: #276749; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; border-left: 4px solid #68d391; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>🏆 洛克战术分析中心</h2>
+    <h2 id="mainStatus">⚙️ 正在同步卫星数据...</h2>
     
     <datalist id="petList"></datalist>
 
     <div class="input-group">
-        <label>🛡️ 我方精灵 (输入名称搜索)</label>
-        <input type="text" id="myPet" list="petList" placeholder="例如：圣煌后" onchange="runAnalysis()">
+        <label>🛡️ 我方精灵</label>
+        <input type="text" id="myPet" list="petList" placeholder="搜索我方精灵..." autocomplete="off">
     </div>
 
     <div class="input-group">
-        <label>🎯 敌方精灵 (输入名称搜索)</label>
-        <input type="text" id="enemyPet" list="petList" placeholder="例如：白发路路" onchange="runAnalysis()">
+        <label>🎯 敌方精灵</label>
+        <input type="text" id="enemyPet" list="petList" placeholder="搜索敌方精灵..." autocomplete="off">
     </div>
 
     <div id="resultPanel" class="panel">
-        <h3 style="margin-top:0; font-size: 16px; border-bottom: 2px solid #ddd; padding-bottom: 8px;">📊 胜率模拟与速度博弈</h3>
-        <p style="margin: 5px 0;">预估胜率：<strong id="winRateText" style="font-size:18px; color:#2c3e50;">50%</strong></p >
-        <div class="bar-bg"><div id="winRateBar" class="bar-fill"></div></div>
+        <div class="win-box">
+            <div class="win-rate" id="winRateText">50%</div>
+            <div style="font-size:12px; color:#94a3b8; font-weight:600;">核心胜率评估预测</div>
+            <div class="bar-bg"><div id="winRateBar" class="bar-fill"></div></div>
+        </div>
         
-        <p id="speedAnalysis" style="font-weight: bold; margin-top: 15px;"></p >
-        <p>克制倍率：<span id="multiplierText" style="font-weight: bold;">1.0x</span></p >
+        <div class="strat-card">
+            <div id="moveOrderText" style="font-size:14px; line-height:1.5;"></div>
+            <div style="margin-top:8px; font-size:13px;">🔄 建议换宠: <strong id="switchText" style="color:var(--danger)">--</strong></div>
+        </div>
 
-        <h3 style="margin-top:20px; font-size: 16px; border-bottom: 2px solid #ddd; padding-bottom: 8px;">⚠️ 敌方高危机制预警</h3>
-        <div id="enemyTags" class="tags-container"></div>
+        <label>⚠️ 敌方威胁监控</label>
+        <div id="enemyTags"></div>
+        
+        <label style="margin-top:15px;">✅ 我方操作指引</label>
+        <div id="myAdvice"></div>
     </div>
 </div>
 
 <script src="config.js"></script>
 <script src="engine.js"></script>
+
 <script>
     let db = [];
 
-    // 加载数据库
-    async function loadData() {
+    // 核心：初始化加载
+    window.onload = async function() {
+        const status = document.getElementById('mainStatus');
         try {
-            const res = await fetch('pet_data.json');
+            const res = await fetch('pet_data.json?v=' + Date.now()); // 强制绕过缓存
+            if (!res.ok) throw new Error("文件不存在");
             db = await res.json();
+            
             const dl = document.getElementById('petList');
             db.forEach(p => {
                 let opt = document.createElement('option');
                 opt.value = p.name;
                 dl.appendChild(opt);
             });
-            document.querySelector('h2').innerText = "🏆 洛克战术中心 (已就绪)";
+            status.innerHTML = "🏆 战术中心已载入 (" + db.length + ")";
         } catch (e) {
-            document.querySelector('h2').innerText = "❌ 数据加载失败";
+            status.innerHTML = "❌ 数据加载失败: 请检查文件名";
+            console.error(e);
         }
-    }
+    };
 
-    // 运行核心分析逻辑
+    // 核心：触发监听
     function runAnalysis() {
-        const myName = document.getElementById('myPet').value;
-        const enName = document.getElementById('enemyPet').value;
+        const myName = document.getElementById('myPet').value.trim();
+        const enName = document.getElementById('enemyPet').value.trim();
         
         const myPet = db.find(p => p.name === myName);
         const enPet = db.find(p => p.name === enName);
@@ -83,34 +105,36 @@
             return;
         }
 
-        // 1. 调用 engine.js 算胜率和速度
-        const adv = RocoEngine.calculateAdvantage(myPet, enPet);
-        
-        // 更新 UI
+        // 选定成功，开启面板
         document.getElementById('resultPanel').style.display = 'block';
-        document.getElementById('winRateBar').style.width = adv.winRate + '%';
-        document.getElementById('winRateText').innerText = adv.winRate + '%';
+
+        // 1. 调用引擎算胜率
+        const wr = RocoEngine.simulateWinRate(myPet, enPet);
+        document.getElementById('winRateText').innerText = wr + '%';
+        document.getElementById('winRateBar').style.width = wr + '%';
         
-        // 动态变色
-        if(adv.winRate > 60) document.getElementById('winRateBar').style.background = '#2ecc71';
-        else if(adv.winRate < 40) document.getElementById('winRateBar').style.background = '#e74c3c';
-        else document.getElementById('winRateBar').style.background = '#f1c40f';
+        // 胜率变色
+        document.getElementById('winRateBar').style.background = wr >= 60 ? '#2ecc71' : (wr <= 40 ? '#e74c3c' : '#f1c40f');
 
-        document.getElementById('speedAnalysis').innerHTML = adv.speedMsg;
-        document.getElementById('multiplierText').innerText = adv.multiplier + 'x';
-        document.getElementById('multiplierText').style.color = adv.multiplier > 1 ? '#2ecc71' : (adv.multiplier < 1 ? '#e74c3c' : '#333');
+        // 2. 获取战术提示
+        const strat = RocoEngine.getStrategy(myPet, enPet);
+        document.getElementById('moveOrderText').innerText = strat.moveOrder;
+        document.getElementById('switchText').innerText = strat.shouldSwitch;
 
-        // 2. 调用 engine.js 解析敌方机制（找技能里的删PP、硬控等）
-        const tags = RocoEngine.analyzeMechanics(enPet);
-        const tagContainer = document.getElementById('enemyTags');
-        if (tags.length === 0) {
-            tagContainer.innerHTML = '<div style="background:#e8f8f5; color:#16a085;">✅ 未检测到高危机制，按常规属性对战即可。</div>';
-        } else {
-            tagContainer.innerHTML = tags.map(t => `<div>${t}</div>`).join('');
-        }
+        // 3. 机制解析
+        const myMech = RocoEngine.analyzeMechanics(myPet);
+        const enMech = RocoEngine.analyzeMechanics(enPet);
+
+        document.getElementById('myAdvice').innerHTML = myMech.advice.length ? 
+            myMech.advice.map(a => `<div class="tag-green">✅ ${a}</div>`).join('') : '<div class="tag-green">常规输出即可</div>';
+        
+        document.getElementById('enemyTags').innerHTML = enMech.threats.length ? 
+            enMech.threats.map(t => `<div class="tag-red">🚨 ${t}</div>`).join('') : '<div class="tag-green">未发现高危机制</div>';
     }
 
-    loadData();
+    // 绑定输入事件
+    document.getElementById('myPet').addEventListener('input', runAnalysis);
+    document.getElementById('enemyPet').addEventListener('input', runAnalysis);
 </script>
 </body>
 </html>
