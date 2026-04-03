@@ -3,44 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>洛克战术实战辅助</title>
+    <title>洛克对局实战中心</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 10px; margin: 0; }
+        body { font-family: -apple-system, sans-serif; background: #f4f6f9; padding: 10px; margin: 0; }
         .card { background: white; max-width: 450px; margin: 0 auto; border-radius: 15px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header { text-align: center; font-weight: bold; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 15px; }
+        .header { text-align: center; font-weight: bold; color: #2d3436; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 15px; }
         .row { display: flex; gap: 10px; margin-bottom: 10px; }
-        input[type="text"] { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; }
         
-        .hp-box { background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .hp-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; font-weight: bold; }
-        input[type="range"] { width: 100%; cursor: pointer; }
+        .hp-box { background: #f8f9fa; padding: 12px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #edf2f7; }
+        .hp-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; font-weight: bold; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: #3498db; }
 
-        #panel { display: none; margin-top: 15px; text-align: center; }
-        .win-rate { font-size: 48px; font-weight: 900; color: #2d3436; margin: 10px 0; }
-        .mult-info { font-size: 13px; color: #636e72; margin-bottom: 15px; }
+        #panel { display: none; margin-top: 15px; text-align: center; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        .box { text-align: left; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 8px; border-left: 4px solid; }
-        .box-red { background: #fff5f5; color: #c53030; border-color: #feb2b2; }
-        .box-green { background: #f0fff4; color: #276749; border-color: #9ae6b4; }
+        .win-rate { font-size: 56px; font-weight: 900; color: #2d3436; margin: 5px 0; letter-spacing: -2px; }
+        .mult-info { font-size: 13px; color: #636e72; background: #eee; display: inline-block; padding: 3px 10px; border-radius: 20px; margin-bottom: 15px; }
+        
+        .box { text-align: left; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 8px; border-left: 5px solid; }
+        .box-red { background: #fff5f5; color: #c53030; border-color: #fc8181; }
+        .box-green { background: #f0fff4; color: #276749; border-color: #68d391; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="header" id="status">同步中...</div>
+    <div class="header" id="status">📡 卫星数据同步中...</div>
     
     <div class="row">
-        <input type="text" id="myN" list="pl" placeholder="我方精灵" onfocus="this.value=''">
-        <input type="text" id="enN" list="pl" placeholder="敌方精灵" onfocus="this.value=''">
+        <input type="text" id="myN" list="pl" placeholder="输入我方精灵" onfocus="this.value=''">
+        <input type="text" id="enN" list="pl" placeholder="输入敌方精灵" onfocus="this.value=''">
     </div>
     <datalist id="pl"></datalist>
 
     <div class="hp-box">
-        <div class="hp-label"><span>我方 HP: <span id="myHpVal">100</span>%</span></div>
+        <div class="hp-label"><span>我方 HP: <span id="myHpVal" style="color:#276749">100</span>%</span></div>
         <input type="range" id="myHp" min="0" max="100" value="100">
     </div>
     <div class="hp-box">
-        <div class="hp-label"><span>敌方 HP: <span id="enHpVal">100</span>%</span></div>
+        <div class="hp-label"><span>敌方 HP: <span id="enHpVal" style="color:#c53030">100</span>%</span></div>
         <input type="range" id="enHp" min="0" max="100" value="100">
     </div>
 
@@ -56,39 +58,81 @@
 <script src="engine.js"></script>
 <script>
     let db = [];
+    let currentMy = null;
+    let currentEn = null;
+
     async function init() {
         try {
             const r = await fetch('pet_data.json?v=' + Date.now());
             db = await r.json();
             const l = document.getElementById('pl');
-            db.forEach(p => { let o = document.createElement('option'); o.value = p.name; l.appendChild(o); });
-            document.getElementById('status').innerText = "🏆 实战分析系统 (已就绪)";
-        } catch(e) { document.getElementById('status').innerText = "❌ 数据加载失败"; }
+            db.forEach(p => { 
+                if(p.name) {
+                    let o = document.createElement('option'); 
+                    o.value = p.name; 
+                    l.appendChild(o); 
+                }
+            });
+            document.getElementById('status').innerText = "🏆 对局系统已就绪 (" + db.length + ")";
+        } catch(e) { document.getElementById('status').innerText = "❌ 加载失败，请检查pet_data.json"; }
     }
 
+    // 核心更新函数
     function update() {
-        const my = db.find(p => p.name === document.getElementById('myN').value);
-        const en = db.find(p => p.name === document.getElementById('enN').value);
+        const myName = document.getElementById('myN').value.trim();
+        const enName = document.getElementById('enN').value.trim();
         const myH = parseInt(document.getElementById('myHp').value);
         const enH = parseInt(document.getElementById('enHp').value);
         
+        // 更新 UI 上的百分比文字
         document.getElementById('myHpVal').innerText = myH;
         document.getElementById('enHpVal').innerText = enH;
 
-        if (my && en) {
-            document.getElementById('panel').style.display = 'block';
-            const res = RocoEngine.calculateLive(my, en, myH, enH);
+        // 尝试匹配精灵（如果名字变了才重新搜，没变就用缓存的）
+        if (!currentMy || currentMy.name !== myName) {
+            currentMy = db.find(p => p.name === myName);
+        }
+        if (!currentEn || currentEn.name !== enName) {
+            currentEn = db.find(p => p.name === enName);
+        }
+
+        const panel = document.getElementById('panel');
+        
+        // 只有当两个精灵都成功匹配时才渲染面板
+        if (currentMy && currentEn) {
+            panel.style.display = 'block';
             
+            // 调用 engine.js 里的计算函数
+            const res = RocoEngine.calculateLive(currentMy, currentEn, myH, enH);
+            
+            // 更新胜率数字
             document.getElementById('wrText').innerText = res.pct + "%";
-            document.getElementById('multText').innerHTML = 
-                `我方输出: x${res.myAtkMult} | 敌方输出: x${res.enAtkMult}`;
             
-            document.getElementById('threats').innerHTML = res.threats.map(t => `<div class="box box-red">${t}</div>`).join('');
-            document.getElementById('advice').innerHTML = res.advice.map(a => `<div class="box box-green">${a}</div>`).join('');
+            // 更新克制信息
+            document.getElementById('multText').innerHTML = 
+                `我方伤害 x${res.myAtkMult} | 敌方伤害 x${res.enAtkMult}`;
+            
+            // 更新威胁和建议（解决消失的问题）
+            document.getElementById('threats').innerHTML = res.threats.length > 0 
+                ? res.threats.map(t => `<div class="box box-red">🚨 ${t}</div>`).join('')
+                : `<div class="box box-red" style="border-color:#ddd; color:#999; background:#f9f9f9;">暂无特殊威胁</div>`;
+
+            document.getElementById('advice').innerHTML = res.advice.length > 0 
+                ? res.advice.map(a => `<div class="box box-green">💡 ${a}</div>`).join('')
+                : `<div class="box box-green" style="border-color:#ddd; color:#999; background:#f9f9f9;">建议稳扎稳打</div>`;
+                
+        } else {
+            // 如果名字没输全，面板必须隐藏，否则会报错
+            panel.style.display = 'none';
         }
     }
 
-    ['myN','enN','myHp','enHp'].forEach(id => document.getElementById(id).addEventListener('input', update));
+    // 监听：不管是打字还是拉滑块，都立刻执行 update
+    document.getElementById('myN').addEventListener('input', update);
+    document.getElementById('enN').addEventListener('input', update);
+    document.getElementById('myHp').addEventListener('input', update);
+    document.getElementById('enHp').addEventListener('input', update);
+
     init();
 </script>
 </body>
