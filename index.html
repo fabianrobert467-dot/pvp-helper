@@ -6,61 +6,58 @@
     <title>洛克 PVP 终极辅助终端</title>
     <style>
         :root { --primary: #3498db; --success: #2ecc71; --warning: #f1c40f; --danger: #e74c3c; }
-        body { font-family: -apple-system, "Helvetica Neue", sans-serif; background: #f4f7f9; padding: 15px; margin: 0; color: #333; }
-        .card { background: white; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
-        h2 { text-align: center; color: #2c3e50; margin-bottom: 25px; font-size: 20px; }
+        body { font-family: -apple-system, sans-serif; background: #f4f7f9; padding: 15px; margin: 0; }
+        .card { background: white; max-width: 600px; margin: 0 auto; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; font-size: 18px; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { font-weight: bold; color: #7f8c8d; font-size: 13px; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 2px solid #edf2f7; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
         
-        .input-group { margin-bottom: 20px; position: relative; }
-        label { font-weight: 600; color: #7f8c8d; font-size: 13px; display: block; margin-bottom: 8px; text-transform: uppercase; }
-        input { width: 100%; padding: 14px; border: 2px solid #edf2f7; border-radius: 10px; font-size: 16px; box-sizing: border-box; transition: all 0.3s; background: #f8fafc; }
-        input:focus { border-color: var(--primary); outline: none; background: #fff; box-shadow: 0 0 0 4px rgba(52,152,219,0.1); }
+        /* 结果面板 - 默认隐藏 */
+        #resultPanel { display: none; margin-top: 20px; padding: 15px; border-radius: 12px; background: #fff; border: 2px solid #3498db; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .panel { display: none; margin-top: 25px; padding: 20px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+        .win-box { text-align: center; margin-bottom: 15px; }
+        .win-rate { font-size: 36px; font-weight: 900; color: #2c3e50; }
+        .bar-bg { background: #eee; height: 12px; border-radius: 6px; overflow: hidden; margin: 10px 0; }
+        .bar-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.6s ease; }
 
-        .win-box { text-align: center; margin-bottom: 20px; }
-        .win-rate { font-size: 32px; font-weight: 800; color: #2c3e50; }
-        .bar-bg { background: #edf2f7; height: 12px; border-radius: 6px; overflow: hidden; margin: 12px 0; }
-        .bar-fill { background: var(--primary); height: 100%; width: 50%; transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
-
-        .strat-card { background: #f8fafc; padding: 15px; border-left: 4px solid var(--primary); border-radius: 4px; margin-bottom: 20px; }
-        .tag-red { background: #fff5f5; color: #c53030; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; border-left: 4px solid #fc8181; font-weight: 500; }
-        .tag-green { background: #f0fff4; color: #276749; padding: 8px 12px; border-radius: 6px; margin-bottom: 8px; font-size: 14px; border-left: 4px solid #68d391; }
+        .tag-red { background: #fff5f5; color: #c53030; padding: 8px; border-radius: 6px; margin-bottom: 5px; font-size: 14px; border-left: 4px solid #fc8181; }
+        .tag-green { background: #f0fff4; color: #276749; padding: 8px; border-radius: 6px; margin-bottom: 5px; font-size: 14px; border-left: 4px solid #68d391; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 id="mainStatus">⚙️ 正在同步卫星数据...</h2>
+    <h2 id="mainStatus">⚙️ 正在加载数据库...</h2>
     
     <datalist id="petList"></datalist>
 
     <div class="input-group">
         <label>🛡️ 我方精灵</label>
-        <input type="text" id="myPet" list="petList" placeholder="搜索我方精灵..." autocomplete="off">
+        <input type="text" id="myPet" list="petList" placeholder="输入并从列表选择" autocomplete="off">
     </div>
 
     <div class="input-group">
         <label>🎯 敌方精灵</label>
-        <input type="text" id="enemyPet" list="petList" placeholder="搜索敌方精灵..." autocomplete="off">
+        <input type="text" id="enemyPet" list="petList" placeholder="输入并从列表选择" autocomplete="off">
     </div>
 
-    <div id="resultPanel" class="panel">
+    <div id="resultPanel">
         <div class="win-box">
-            <div class="win-rate" id="winRateText">50%</div>
-            <div style="font-size:12px; color:#94a3b8; font-weight:600;">核心胜率评估预测</div>
+            <div id="winRateText" class="win-rate">--%</div>
+            <div style="font-size:12px; color:#7f8c8d;">PVP 模拟胜率</div>
             <div class="bar-bg"><div id="winRateBar" class="bar-fill"></div></div>
         </div>
         
-        <div class="strat-card">
-            <div id="moveOrderText" style="font-size:14px; line-height:1.5;"></div>
-            <div style="margin-top:8px; font-size:13px;">🔄 建议换宠: <strong id="switchText" style="color:var(--danger)">--</strong></div>
+        <div style="background:#f8fafc; padding:10px; border-radius:8px; font-size:14px; margin-bottom:15px;">
+            <p id="moveOrderText" style="margin:0; color:#34495e;"></p >
         </div>
 
-        <label>⚠️ 敌方威胁监控</label>
+        <label>⚠️ 敌方威胁提示</label>
         <div id="enemyTags"></div>
         
-        <label style="margin-top:15px;">✅ 我方操作指引</label>
+        <label style="margin-top:15px;">✅ 我方操作建议</label>
         <div id="myAdvice"></div>
     </div>
 </div>
@@ -71,70 +68,73 @@
 <script>
     let db = [];
 
-    // 核心：初始化加载
+    // 1. 加载数据
     window.onload = async function() {
-        const status = document.getElementById('mainStatus');
         try {
-            const res = await fetch('pet_data.json?v=' + Date.now()); // 强制绕过缓存
-            if (!res.ok) throw new Error("文件不存在");
+            const res = await fetch('pet_data.json?v=' + Date.now());
             db = await res.json();
-            
             const dl = document.getElementById('petList');
             db.forEach(p => {
                 let opt = document.createElement('option');
-                opt.value = p.name;
+                opt.value = p.name.trim(); // 自动修剪数据库里的空格
                 dl.appendChild(opt);
             });
-            status.innerHTML = "🏆 战术中心已载入 (" + db.length + ")";
+            document.getElementById('mainStatus').innerText = "🏆 战术中心已就绪 (" + db.length + ")";
         } catch (e) {
-            status.innerHTML = "❌ 数据加载失败: 请检查文件名";
-            console.error(e);
+            document.getElementById('mainStatus').innerText = "❌ 加载失败，请检查文件";
         }
     };
 
-    // 核心：触发监听
-    function runAnalysis() {
+    // 2. 核心逻辑：监听两个输入框
+    function checkAndRun() {
         const myName = document.getElementById('myPet').value.trim();
         const enName = document.getElementById('enemyPet').value.trim();
         
-        const myPet = db.find(p => p.name === myName);
-        const enPet = db.find(p => p.name === enName);
+        // 查找宠物（不区分空格）
+        const myPet = db.find(p => p.name.trim() === myName);
+        const enPet = db.find(p => p.name.trim() === enName);
 
-        if (!myPet || !enPet) {
-            document.getElementById('resultPanel').style.display = 'none';
-            return;
+        const panel = document.getElementById('resultPanel');
+        const status = document.getElementById('mainStatus');
+
+        if (myPet && enPet) {
+            // 【关键步骤】先显示面板，防止后续逻辑报错导致面板不出来
+            panel.style.display = 'block';
+            status.innerText = "📊 正在实时模拟对决...";
+
+            try {
+                // 执行引擎计算
+                const wr = RocoEngine.simulateWinRate(myPet, enPet);
+                document.getElementById('winRateText').innerText = wr + '%';
+                document.getElementById('winRateBar').style.width = wr + '%';
+                
+                const strat = RocoEngine.getStrategy(myPet, enPet);
+                document.getElementById('moveOrderText').innerText = strat.moveOrder;
+
+                const enMech = RocoEngine.analyzeMechanics(enPet);
+                const myMech = RocoEngine.analyzeMechanics(myPet);
+
+                document.getElementById('enemyTags').innerHTML = enMech.threats.length ? 
+                    enMech.threats.map(t => `<div class="tag-red">🚨 ${t}</div>`).join('') : '<div class="tag-green">常规威胁</div>';
+                
+                document.getElementById('myAdvice').innerHTML = myMech.advice.length ? 
+                    myMech.advice.map(a => `<div class="tag-green">✅ ${a}</div>`).join('') : '<div class="tag-green">正常对战</div>';
+
+            } catch (err) {
+                console.error("引擎计算出错:", err);
+                status.innerText = "⚠️ 计算出错: " + err.message;
+            }
+        } else {
+            // 如果没找全，保持隐藏
+            panel.style.display = 'none';
+            if(myName && enName) {
+                status.innerText = "🔍 库中未找到所选宠物";
+            }
         }
-
-        // 选定成功，开启面板
-        document.getElementById('resultPanel').style.display = 'block';
-
-        // 1. 调用引擎算胜率
-        const wr = RocoEngine.simulateWinRate(myPet, enPet);
-        document.getElementById('winRateText').innerText = wr + '%';
-        document.getElementById('winRateBar').style.width = wr + '%';
-        
-        // 胜率变色
-        document.getElementById('winRateBar').style.background = wr >= 60 ? '#2ecc71' : (wr <= 40 ? '#e74c3c' : '#f1c40f');
-
-        // 2. 获取战术提示
-        const strat = RocoEngine.getStrategy(myPet, enPet);
-        document.getElementById('moveOrderText').innerText = strat.moveOrder;
-        document.getElementById('switchText').innerText = strat.shouldSwitch;
-
-        // 3. 机制解析
-        const myMech = RocoEngine.analyzeMechanics(myPet);
-        const enMech = RocoEngine.analyzeMechanics(enPet);
-
-        document.getElementById('myAdvice').innerHTML = myMech.advice.length ? 
-            myMech.advice.map(a => `<div class="tag-green">✅ ${a}</div>`).join('') : '<div class="tag-green">常规输出即可</div>';
-        
-        document.getElementById('enemyTags').innerHTML = enMech.threats.length ? 
-            enMech.threats.map(t => `<div class="tag-red">🚨 ${t}</div>`).join('') : '<div class="tag-green">未发现高危机制</div>';
     }
 
-    // 绑定输入事件
-    document.getElementById('myPet').addEventListener('input', runAnalysis);
-    document.getElementById('enemyPet').addEventListener('input', runAnalysis);
+    document.getElementById('myPet').addEventListener('input', checkAndRun);
+    document.getElementById('enemyPet').addEventListener('input', checkAndRun);
 </script>
 </body>
 </html>
