@@ -29,3 +29,5 @@ function simulate() {
   const winner = aSpeed > bSpeed ? petA.name : petB.name;
   document.getElementById("result").innerText = "先手：" + winner;
 }
+
+loadData();
