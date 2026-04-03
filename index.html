@@ -1,131 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>PVP对局分析助手 V14 Pro</title>
-<style>
-    body {
-        font-family: Arial;
-        background: #0f172a;
-        color: #e2e8f0;
-        text-align: center;
-        padding: 20px;
-    }
-    .box {
-        background: #1e293b;
-        padding: 20px;
-        border-radius: 12px;
-        width: 90%;
-        max-width: 500px;
-        margin: auto;
-        box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-    input, select, button {
-        width: 90%;
-        padding: 10px;
-        margin: 10px 0;
-        border-radius: 8px;
-        border: none;
-    }
-    button {
-        background: #3b82f6;
-        color: white;
-        font-weight: bold;
-        cursor: pointer;
-    }
-    button:hover {
-        background: #2563eb;
-    }
-    .result {
-        margin-top: 20px;
-        text-align: left;
-        background: #020617;
-        padding: 15px;
-        border-radius: 10px;
-    }
-</style>
+  <meta charset="UTF-8">
+  <title>PvP Helper</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
 </head>
-
 <body>
+  <h1>PvP Helper</h1>
 
-<div class="box">
-    <h2>⚔️ PVP对局分析助手 V14 Pro</h2>
+  <select id="petA"></select>
+  <select id="petB"></select>
+  <button onclick="simulate()">对战</button>
 
-    <label>你的当前宠物：</label>
-    <select id="myPet">
-        <option>白发路路</option>
-        <option>伊兰龙</option>
-        <option>伊兰亚龙</option>
-    </select>
+  <div id="result"></div>
 
-    <label>对手宠物：</label>
-    <input id="enemyPet" placeholder="例如：火系 / 龙系 / 控制类">
-
-    <label>你的血量（%）：</label>
-    <input id="myHp" type="number" placeholder="例如 80">
-
-    <label>对手血量（%）：</label>
-    <input id="enemyHp" type="number" placeholder="例如 70">
-
-    <label>当前速度状态：</label>
-    <select id="speedState">
-        <option>我方速度高</option>
-        <option>对方速度高</option>
-        <option>不确定</option>
-    </select>
-
-    <button onclick="analyze()">开始分析</button>
-
-    <div class="result" id="result"></div>
-</div>
-
-<script>
-function analyze() {
-    let myPet = document.getElementById("myPet").value;
-    let enemyPet = document.getElementById("enemyPet").value;
-    let myHp = parseInt(document.getElementById("myHp").value);
-    let enemyHp = parseInt(document.getElementById("enemyHp").value);
-    let speed = document.getElementById("speedState").value;
-
-    let advice = "";
-
-    // 简单策略逻辑（可继续升级）
-    if (myPet === "白发路路") {
-        advice += "👉 当前策略：继续叠加速度或准备换伊兰体系<br>";
-        advice += "✔ 推荐：击鼓传花后切换伊兰亚龙<br>";
-    }
-
-    if (myPet.includes("伊兰")) {
-        if (myHp > enemyHp) {
-            advice += "👉 你处于血量优势，可以主动进攻<br>";
-            advice += "✔ 推荐：升龙咆哮 + 龙吟压制<br>";
-        } else {
-            advice += "👉 血量劣势，建议偏防守或寻找翻盘机会<br>";
-            advice += "✔ 推荐：绵里藏针消耗 + 观察对手<br>";
-        }
-
-        if (speed === "对方速度高") {
-            advice += "⚠️ 对手速度占优，注意先手技能或保护<br>";
-        } else if (speed === "我方速度高") {
-            advice += "✅ 你速度占优，可以先手压制<br>";
-        }
-    }
-
-    // 针对对手类型简单判断
-    if (enemyPet.includes("火")) {
-        advice += "🔥 对手可能偏爆发，小心被秒<br>";
-    }
-    if (enemyPet.includes("控制")) {
-        advice += "🧠 注意解控或避免被控节奏<br>";
-    }
-
-    // 技能推荐逻辑
-    advice += "<br>📌 技能循环建议：<br>";
-    advice += "升龙咆哮 → 龙吟 → 绵里藏针 → 怨力打击（收割/补伤害）<br>";
-
-    document.getElementById("result").innerHTML = advice;
-}
-</script>
-
+  <script src="app.js"></script>
 </body>
 </html>
