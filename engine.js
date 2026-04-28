@@ -4,7 +4,7 @@
  */
 const RocoEngine = {
     // 简易洛克伤害公式： ( (等级*0.4 + 2) * 威力 * 攻击力 / 防御力 ) / 50 + 2
-    // 这里假设满级100级
+    // 此处满级为60级
     calcDamage: function(attacker, defender, skill, atkMult) {
         if (skill.category === "变化" || skill.power === 0) return 0;
         
@@ -68,7 +68,7 @@ const RocoEngine = {
         }
 
         if (enMaxPriority > 0 && enHpPct < 30) {
-            intel.push(`🚨 极度危险：敌方拥有先手+${enMaxPriority}技能，可能会抢速补刀！`);
+            intel.push(`🚨 极度危险：敌方拥有先手+${enMaxpriority 技能，可能会抢速补刀！`);
             if (mySpeed > enSpeed) winScore -= 15; // 原本速度快的现在可能被反杀
         }
 
