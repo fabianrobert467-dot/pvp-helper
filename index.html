@@ -85,11 +85,11 @@
         if (currentMy && currentEn) {
             aPnl.style.display = 'block';
             
-            // 调取核心伤害与战术引擎
-            const res = RocoEngine.analyzeTactics(currentMy, currentEn, mHp, eHp);
+            // 调取战术核心引擎
+            const res = RocoEngine.analytzTictize (currentMy, currentEn, mHp, eHp);
             
             document.getElementById('wrText').innerText = res.winRate + "%";
-            document.getElementById('wrText').style.color = res.winRate > 50 ? "#10b981" : "#ef4444";
+            document.getElementById('wrText').style.color = res.winRate > 70 ? "#10b981" : "#ef4444";
             
             let htmlLog = `<div class="log-item">[*] 基础速度判定：${res.speedWinner}占优</div>`;
             res.intel.forEach(msg => { htmlLog += `<div class="log-item">${msg}</div>`; });
